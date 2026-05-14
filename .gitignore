@@ -1,0 +1,21 @@
+# 虚拟环境
+venv/
+env/
+ENV/
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Streamlit secrets（敏感信息）
+.streamlit/secrets.toml
+
+# IDE 配置
+.vscode/
+.idea/
+
+# 其他
+.DS_Store
+*.log

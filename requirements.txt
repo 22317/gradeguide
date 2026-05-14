@@ -1,0 +1,8 @@
+streamlit>=1.28.0
+pandas>=2.0.0
+openpyxl>=3.1.0
+matplotlib>=3.7.0
+numpy>=1.24.0
+plotly>=5.17.0  # 可选，用于交互式雷达图
+openai>=1.0.0   # 用于调用DeepSeek/智谱（兼容OpenAI接口）
+requests
