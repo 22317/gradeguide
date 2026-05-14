@@ -8,16 +8,27 @@ from utils.ai_advice import generate_personal_advice, generate_comparison_advice
 from utils.ai_advice import generate_personal_advice, generate_comparison_advice, generate_trend_advice, generate_class_report
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
-
+import os
 
 
 st.set_page_config(page_title="GradeGuide 学情分析系统", layout="wide", initial_sidebar_state="collapsed")
 
-# 指定字体路径
-font_path = 'fonts/NotoSansCJKsc-Regular.otf'
-prop = fm.FontProperties(fname=font_path)
-plt.rcParams['font.family'] = prop.get_name()
-plt.rcParams['axes.unicode_minus'] = False
+
+
+# 获取字体文件的绝对路径
+font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'NotoSansCJKsc-Regular.otf')
+
+if os.path.exists(font_path):
+    # 添加字体到 matplotlib 字体管理器
+    fm.fontManager.addfont(font_path)
+    # 获取字体属性并设置为默认字体
+    prop = fm.FontProperties(fname=font_path)
+    plt.rcParams['font.family'] = prop.get_name()
+    plt.rcParams['axes.unicode_minus'] = False
+else:
+    # 后备方案：使用系统可能存在的字体
+    plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei', 'DejaVu Sans']
+    plt.rcParams['axes.unicode_minus'] = False
 
 # ========== 初始化启动状态 ==========
 if "started" not in st.session_state:
