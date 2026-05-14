@@ -6,8 +6,18 @@ from utils.data_loader import load_scores, get_class_summary
 from utils.radar_chart import draw_radar_chart, draw_comparison_radar
 from utils.ai_advice import generate_personal_advice, generate_comparison_advice, generate_trend_advice
 from utils.ai_advice import generate_personal_advice, generate_comparison_advice, generate_trend_advice, generate_class_report
+import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+
+
 
 st.set_page_config(page_title="GradeGuide 学情分析系统", layout="wide", initial_sidebar_state="collapsed")
+
+# 指定字体路径
+font_path = 'fonts/NotoSansCJKsc-Regular.otf'
+prop = fm.FontProperties(fname=font_path)
+plt.rcParams['font.family'] = prop.get_name()
+plt.rcParams['axes.unicode_minus'] = False
 
 # ========== 初始化启动状态 ==========
 if "started" not in st.session_state:
