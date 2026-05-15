@@ -754,79 +754,66 @@ with tab4:
         )
         
         # ========== AI 选科分析与志愿参考 ==========
-        st.subheader("🎯 AI 选科分析与志愿参考")
-        
-        name_col = result_df.columns[0]
-        student_names = result_df[name_col].tolist()
-        selected_student_rec = st.selectbox("选择学生", student_names, key="yunnan_student_rec")
-        
-        if selected_student_rec:
-            student_row = result_df[result_df[name_col] == selected_student_rec].iloc[0]
-            total_score = student_row.get('赋分后总分', 0)
-            
-            # 计算年级排名（如果尚未计算）
-            if grade_df is not None and 'grade_ranks' not in st.session_state:
-                with st.spinner("正在计算年级排名..."):
-                    from utils.grade_converter import calculate_grade_rank_for_class
-                    reelected_grade = auto_detect_reelect_subjects(grade_df)
-                    if reelected_grade:
-                        grade_df_converted, _ = calculate_converted_grades(grade_df, grade_df, reelected_grade)
-                        grade_df_converted = calculate_total_scores(grade_df_converted, reelected_grade)
-                        grade_ranks = calculate_grade_rank_for_class(grade_df_converted, result_df, '赋分后总分')
-                        st.session_state.grade_ranks = dict(zip(result_df[name_col].tolist(), grade_ranks))
-                    else:
-                        st.session_state.grade_ranks = {}
-            
-            grade_rank_percent = st.session_state.get('grade_ranks', {}).get(selected_student_rec, None)
-            if grade_rank_percent is not None:
-                rank_percent = grade_rank_percent
-                rank_source = "年级/联考"
-            else:
-                df_rank = result_df.set_index(name_col)
-                if '赋分后总分' in df_rank.columns:
-                    rank = df_rank['赋分后总分'].rank(ascending=False).loc[selected_student_rec]
-                    rank_percent = rank / len(df_rank)
-                    rank_source = "班级"
-                else:
-                    rank_percent = 0.5
-                    rank_source = "未知"
-            
-            # 自动识别选科组合
-            first_subject = None
-            if '物理' in result_df.columns and not pd.isna(student_row['物理']):
-                first_subject = '物理'
-            elif '历史' in result_df.columns and not pd.isna(student_row['历史']):
-                first_subject = '历史'
-            
-            second_subjects = []
-            for subj in reelected:
-                if subj in result_df.columns and not pd.isna(student_row[subj]):
-                    second_subjects.append(subj)
-            
-            if first_subject is None or len(second_subjects) != 2:
-                st.warning(f"无法完整识别该学生的选科组合（首选：{first_subject}，再选：{second_subjects}）。请确保表格中包含物理/历史以及至少两门再选科目成绩。")
-            else:
-                st.info(f"**自动识别选科**：首选【{first_subject}】，再选【{', '.join(second_subjects)}】")
-                st.info(f"**排名依据**：{rank_source}数据（排名百分位：{rank_percent*100:.1f}%）")
-                
-                if st.button("🤖 AI生成选科分析与志愿参考", key="yunnan_ai_rec_auto"):
-                    from utils.ai_advice import generate_college_recommendation
-                    with st.spinner("AI 正在分析数据并生成建议..."):
-                        # 假设已有的 rank_percent 是从年级排名计算的
-                        advice, level, majors = generate_college_recommendation(
-                            selected_student_rec,
-                            {'首选': first_subject, '再选': second_subjects},
-                            total_score,
-                            rank_percent=rank_percent,      # 注意参数名是 rank_percent
-                            subject_type=first_subject
-                        )
-                    st.caption("📌 声明：以上分析基于云南省2025年高考一分一段表数据生成，院校层次推荐仅作参考，实际填报请结合当年招生计划和自身情况。一分一段表可替换为最新官方数据以更新分析结果。")
-                    st.success(f"🎉 {selected_student_rec} 的选科分析")
-                    st.info(f"**总分**：{total_score:.0f}分 | **{rank_source}排名**：前{rank_percent*100:.1f}%")
-                    st.success(f"**推荐院校层次**：{level}")
-                    st.info(f"**推荐专业方向**：{majors}")
-                    st.markdown("---")
-                    st.markdown(advice)
+st.subheader("🎯 AI 选科分析与志愿参考")
+
+name_col = result_df.columns[0]
+student_names = result_df[name_col].tolist()
+selected_student_rec = st.selectbox("选择学生", student_names, key="yunnan_student_rec")
+
+if selected_student_rec:
+    student_row = result_df[result_df[name_col] == selected_student_rec].iloc[0]
+    total_score = student_row.get('赋分后总分', 0)
+
+    # 自动识别选科组合
+    first_subject = None
+    if '物理' in result_df.columns and not pd.isna(student_row['物理']):
+        first_subject = '物理'
+    elif '历史' in result_df.columns and not pd.isna(student_row['历史']):
+        first_subject = '历史'
+
+    second_subjects = []
+    for subj in reelected:
+        if subj in result_df.columns and not pd.isna(student_row[subj]):
+            second_subjects.append(subj)
+
+    if first_subject is None or len(second_subjects) != 2:
+        st.warning(f"无法完整识别该学生的选科组合（首选：{first_subject}，再选：{second_subjects}）。请确保表格中包含物理/历史以及至少两门再选科目成绩。")
+    else:
+        st.info(f"**自动识别选科**：首选【{first_subject}】，再选【{', '.join(second_subjects)}】")
+
+        # ========== 强制使用一分一段表计算全省排名 ==========
+        from utils.rank_utils import get_rank_from_score, get_total_students
+
+        province_rank = get_rank_from_score(total_score, first_subject)
+        total_students = get_total_students(first_subject)
+
+        if province_rank > 0 and total_students > 0:
+            rank_percent = province_rank / total_students
+            rank_source = "云南省一分一段表"
+            # 显示排位信息
+            st.info(f"**📊 该生赋分总分 {total_score:.0f} 分对应云南省{first_subject}类预估排位：约第 {province_rank} 名（共 {total_students} 人），排名百分比 {rank_percent:.2%}**")
+        else:
+            st.error("❌ 无法获取全省排名数据，请检查一分一段表文件是否已正确上传。")
+            st.stop()  # 停止，不进行后续AI推荐
+
+        # ========== AI 志愿推荐（使用全省排名） ==========
+        if st.button("🤖 AI生成选科分析与志愿参考", key="yunnan_ai_rec_auto"):
+            from utils.ai_advice import generate_college_recommendation
+            with st.spinner("AI 正在分析数据并生成建议..."):
+                advice, level, majors = generate_college_recommendation(
+                    selected_student_rec,
+                    {'首选': first_subject, '再选': second_subjects},
+                    total_score,
+                    rank_percent=rank_percent,
+                    subject_type=first_subject
+                )
+            st.caption("📌 声明：以上分析基于云南省2025年高考一分一段表数据生成，院校层次推荐仅作参考，实际填报请结合当年招生计划和自身情况。一分一段表可替换为最新官方数据以更新分析结果。")
+            st.success(f"🎉 {selected_student_rec} 的选科分析")
+            st.info(f"**总分**：{total_score:.0f}分 | **全省排名**：前{rank_percent*100:.1f}%")
+            st.success(f"**推荐院校层次**：{level}")
+            st.info(f"**推荐专业方向**：{majors}")
+            st.markdown("---")
+            st.markdown(advice)
     
     # 规则说明折叠
     with st.expander("📖 云南新高考等级赋分规则说明"):
