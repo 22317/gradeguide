@@ -45,13 +45,17 @@ if not st.session_state.started:
         }
         /* 顶部导航栏颜色融合 */
         header[data-testid="stHeader"] {
-            background: linear-gradient(135deg, #e0f2e9 0%, #c8e6df 100%) !important;
+            background: linear-gradient(135deg, #c8e6df 0%, #b0d0c4 100%) !important;
             border-bottom: 1px solid rgba(0,0,0,0.05);
         }
         header[data-testid="stHeader"] button {
             color: #2c3e50 !important;
             background-color: transparent !important;
         }
+        /* 可选：悬停效果 */
+        header[data-testid="stHeader"] button:hover {
+            background-color: rgba(0,0,0,0.05) !important;
+        }        
         .big-title {
             font-size: 70px;
             font-weight: bold;
